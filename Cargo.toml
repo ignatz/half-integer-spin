@@ -20,6 +20,8 @@ spin-factor-wasi = { git = "https://github.com/spinframework/spin", tag = "v3.3.
 spin-factors = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
 spin-factors-executor = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
 spin-factors-test = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
-spin-runtime-config = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-loader = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+# spin-runtime-config = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-telemetry = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
 spin-trigger = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
 terminal = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }

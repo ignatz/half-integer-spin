@@ -1,5 +1,8 @@
 mod build;
 
+#[cfg(test)]
+mod env;
+
 pub use build::FactorsBuilder;
 
 use std::path::PathBuf;
@@ -137,7 +140,6 @@ mod tests {
   use spin_core::{Component, Config, Module, async_trait};
   use spin_factor_wasi::WasiFactor;
   use spin_factors_executor::{ComponentLoader, FactorsExecutor};
-  use spin_factors_test::TestEnvironment;
   use std::sync::Arc;
 
   use super::*;
@@ -153,7 +155,7 @@ mod tests {
     )
     .unwrap();
 
-    let env = TestEnvironment::new(factors);
+    let env = env::TestEnvironment::new(factors);
     let locked = env.build_locked_app().await?;
     let app = App::new(/*id=*/ "test-app", locked);
 
