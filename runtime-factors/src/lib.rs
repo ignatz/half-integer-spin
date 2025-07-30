@@ -1,27 +1,14 @@
 mod build;
 
-#[cfg(test)]
-mod env;
-
-pub use build::FactorsBuilder;
-
-use std::path::PathBuf;
-
 use spin_factor_key_value::KeyValueFactor;
-// use spin_factor_llm::LlmFactor;
 use spin_factor_outbound_http::OutboundHttpFactor;
-// use spin_factor_outbound_mqtt::{NetworkedMqttClient, OutboundMqttFactor};
-// use spin_factor_outbound_mysql::OutboundMysqlFactor;
 use spin_factor_outbound_networking::OutboundNetworkingFactor;
-// use spin_factor_outbound_pg::OutboundPgFactor;
-// use spin_factor_outbound_redis::OutboundRedisFactor;
-// use spin_factor_sqlite::SqliteFactor;
 use spin_factor_variables::VariablesFactor;
 use spin_factor_wasi::{WasiFactor, spin::SpinFilesMounter};
 use spin_factors::{
   ConfigureAppContext, Factor, PrepareContext, RuntimeFactors, SelfInstanceBuilder,
 };
-// use spin_runtime_config::{ResolvedRuntimeConfig, TomlRuntimeConfigSource};
+use std::path::PathBuf;
 
 pub struct MyFactorStateInstanceBuilder {}
 
@@ -72,17 +59,11 @@ pub struct MyFactors {
   pub outbound_http: OutboundHttpFactor,
 
   pub my_factor: MyFactor,
-  // pub sqlite: SqliteFactor,
-  // pub redis: OutboundRedisFactor,
-  // pub mqtt: OutboundMqttFactor,
-  // pub pg: OutboundPgFactor,
-  // pub mysql: OutboundMysqlFactor,
-  // pub llm: LlmFactor,
 }
 
 impl MyFactors {
   pub fn new(
-    state_dir: Option<PathBuf>,
+    _state_dir: Option<PathBuf>,
     working_dir: impl Into<PathBuf>,
     allow_transient_writes: bool,
   ) -> anyhow::Result<Self> {
@@ -94,15 +75,6 @@ impl MyFactors {
       outbound_http: OutboundHttpFactor::default(),
 
       my_factor: MyFactor {},
-      // sqlite: SqliteFactor::new(),
-      // redis: OutboundRedisFactor::new(),
-      // mqtt: OutboundMqttFactor::new(NetworkedMqttClient::creator()),
-      // pg: OutboundPgFactor::new(),
-      // mysql: OutboundMysqlFactor::new(),
-      // llm: LlmFactor::new(
-      //     spin_factor_llm::spin::default_engine_creator(state_dir)
-      //         .context("failed to configure LLM factor")?,
-      // ),
     })
   }
 }
@@ -136,37 +108,70 @@ fn outbound_networking_factor() -> OutboundNetworkingFactor {
 
 #[cfg(test)]
 mod tests {
+  use super::*;
+
   use spin_app::{App, AppComponent};
   use spin_core::{Component, Config, Module, async_trait};
   use spin_factor_wasi::WasiFactor;
-  use spin_factors_executor::{ComponentLoader, FactorsExecutor};
+  use spin_factors::{
+    RuntimeFactors,
+    wasmtime::{Config as WasmConfig, Engine, component::Linker},
+  };
+  use spin_factors_executor::{ComponentLoader, FactorsExecutor, FactorsExecutorApp};
+  use spin_loader::FilesMountStrategy;
   use std::sync::Arc;
-
-  use super::*;
+  use toml::toml;
 
   #[tokio::test]
   async fn instance_builder_works() -> anyhow::Result<()> {
     let cwd = std::env::current_dir().unwrap();
 
-    let factors = MyFactors::new(
+    let mut factors = MyFactors::new(
       /* state_dir= */ Some(cwd.clone()),
       /* working_dir= */ cwd,
       /* allow_transient_writes */ true,
     )
     .unwrap();
 
-    let env = env::TestEnvironment::new(factors);
-    let locked = env.build_locked_app().await?;
-    let app = App::new(/*id=*/ "test-app", locked);
+    let engine = Engine::new(WasmConfig::new().async_support(true))?;
+    let mut linker = Linker::<MyFactorsInstanceState>::new(&engine);
+
+    factors.init(&mut linker)?;
 
     let engine_builder = spin_core::Engine::builder(&Config::default())?;
-    // let linker = engine_builder.linker();
+    let executor = Arc::new(FactorsExecutor::new(engine_builder, factors)?);
 
-    let executor = Arc::new(FactorsExecutor::new(engine_builder, env.factors)?);
+    let _module = Module::new(
+      executor.core_engine().as_ref(),
+      &std::fs::read("../simple.wasm")?,
+    )?;
 
-    let wasm_module = std::fs::read("../simple.wasm")?;
-    let _module = Module::new(executor.core_engine().as_ref(), &wasm_module)?;
+    let factors_executor_app =
+      build_factors_executor_app(executor, MyFactorsRuntimeConfig::default()).await?;
 
+    let mut instance_builder = factors_executor_app.prepare(/*component_id=*/ "empty")?;
+    assert_eq!(instance_builder.app_component().id(), "empty");
+    instance_builder.store_builder().max_memory_size(1_000_000);
+    instance_builder
+      .factor_builder::<WasiFactor>()
+      .unwrap()
+      .args(["foo"]);
+
+    let (instance, mut store) = instance_builder.instantiate(()).await?;
+
+    assert!(
+      instance
+        .get_export_index(&mut store, None, "fermyon:spin/inbound-http")
+        .is_none()
+    );
+
+    return Ok(());
+  }
+
+  async fn build_factors_executor_app(
+    executor: Arc<FactorsExecutor<MyFactors>>,
+    config: MyFactorsRuntimeConfig,
+  ) -> anyhow::Result<FactorsExecutorApp<MyFactors, ()>> {
     struct DummyComponentLoader {}
 
     #[async_trait]
@@ -180,51 +185,30 @@ mod tests {
       }
     }
 
-    let factors_executor_app = executor
-      .load_app(
-        app,
-        MyFactorsRuntimeConfig::default(),
-        &DummyComponentLoader {},
-      )
-      .await?;
+    let app = {
+      let manifest = toml! {
+          spin_manifest_version = 2
 
-    let (instance, mut store) = {
-      let mut instance_builder = factors_executor_app.prepare(/*component_id=*/ "empty")?;
+          [application]
+          name = "test-app"
 
-      assert_eq!(instance_builder.app_component().id(), "empty");
+          [[trigger.test-trigger]]
 
-      instance_builder.store_builder().max_memory_size(1_000_000);
+          [component.empty]
+          source = "does-not-exist.wasm"
+      };
 
-      instance_builder
-        .factor_builder::<WasiFactor>()
-        .unwrap()
-        .args(["foo"]);
+      let toml_str = toml::to_string(&manifest)?;
+      let dir = tempfile::tempdir()?;
+      let path = dir.path().join("spin.toml");
+      std::fs::write(&path, toml_str)?;
 
-      instance_builder.instantiate(()).await?
+      let locked = spin_loader::from_file(&path, FilesMountStrategy::Direct, None).await?;
+      App::new(/*id=*/ "test-app", locked)
     };
 
-    assert!(
-      instance
-        .get_export_index(&mut store, None, "wasi:cli/run@0.2.0")
-        .is_none()
-    );
-
-    assert!(
-      instance
-        .get_export_index(&mut store, None, "fermyon:spin/inbound-http")
-        .is_none()
-    );
-
-    // let cmd = Command::instantiate_async(store.as_mut(), module, executor.core_engine()).await?;
-
-    // let func = instance
-    //   .get_export_index(&mut store, None, "wasi:cli/run@0.2.0");
-    //   .and_then(|i| instance.get_export_index(&mut store, Some(&i), "run"))
-    //   .context("missing the expected 'wasi:cli/run@0.2.0/run' function")?;
-    //
-    // instance.get_typed_func::<(), (Result<(), ()>,)>(&mut store, &func)?
-    // let err = func.call_async(&mut store, ()).await?;
-
-    return Ok(());
+    return executor
+      .load_app(app, config, &DummyComponentLoader {})
+      .await;
   }
 }
