@@ -127,7 +127,7 @@ pub struct TriggerAppArgs {
 #[cfg(test)]
 mod tests {
   use spin_app::{App, AppComponent};
-  use spin_core::{Component, async_trait};
+  use spin_core::{Component, Config, Module, async_trait};
   use spin_factor_wasi::WasiFactor;
   use spin_factors_executor::{ComponentLoader, FactorsExecutor};
   use spin_factors_test::TestEnvironment;
@@ -150,8 +150,11 @@ mod tests {
     let locked = env.build_locked_app().await?;
     let app = App::new(/*id=*/ "test-app", locked);
 
-    let engine_builder = spin_core::Engine::builder(&Default::default())?;
+    let engine_builder = spin_core::Engine::builder(&Config::default())?;
     let executor = Arc::new(FactorsExecutor::new(engine_builder, env.factors)?);
+
+    let wasm_module = std::fs::read("../simple.wasm")?;
+    Module::new(executor.core_engine().as_ref(), &wasm_module)?;
 
     struct DummyComponentLoader {}
 

@@ -1,0 +1,18 @@
+spin_manifest_version = 2
+
+[application]
+name = "simple"
+version = "0.1.0"
+authors = ["Sebastian Jeltsch <sebastian@trailbase.io>"]
+description = "Very simple."
+
+[[trigger.http]]
+route = "/"
+component = "simple"
+
+[component.simple]
+source = "target/wasm32-wasip1/release/simple.wasm"
+allowed_outbound_hosts = []
+[component.simple.build]
+command = "cargo build --target wasm32-wasip1 --release"
+watch = ["src/**/*.rs", "Cargo.toml"]
