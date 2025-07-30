@@ -28,17 +28,12 @@ spin-factors-executor = { workspace = true }
 # spin-runtime-config = { workspace = true }
 spin-trigger = { workspace = true, optional = true }
 terminal = { workspace = true }
+tokio = { version = "^1.38.0", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.41"
-
-[dev-dependencies]
 async-trait = "0.1.88"
 spin-app = { workspace = true }
 spin-core = { workspace = true }
-spin-factors-executor = { workspace = true }
-# spin-factors-test = { workspace = true }
 spin-loader = { workspace = true }
 spin-telemetry = { workspace = true, features = ["testing"] }
 tempfile = "3.20.0"
-tokio = { version = "^1.38.0", features = ["macros", "rt-multi-thread"] }
 toml = "0.9.4"
-# wasmtime-wasi = "35.0.0"
