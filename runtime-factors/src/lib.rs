@@ -1,4 +1,4 @@
-mod build;
+mod helper;
 
 use spin_factor_key_value::KeyValueFactor;
 use spin_factor_outbound_http::OutboundHttpFactor;
@@ -21,32 +21,27 @@ impl Factor for MyFactor {
   type AppState = ();
   type InstanceBuilder = MyFactorStateInstanceBuilder;
 
+  /// Called by TestEnvironment::new.
+  ///
+  /// Here the factor can register stuff with the linker, e.g. outbound HTTP.
   fn init(&mut self, _ctx: &mut impl spin_factors::InitContext<Self>) -> anyhow::Result<()> {
-    // Called by TestEnvironment::new.
-    // panic!("MyFactor::init");
-
-    // Here we can register outbound interfaces, e.g. for outbound http requests.
-    // ctx.link_bindings(spin_world::v1::http::add_to_linker::<_, FactorData<Self>>)?;
-    // wasi::add_to_linker(ctx)?;
-    Ok(())
+    return Ok(());
   }
 
+  /// Called by FactorsExecutor::load_app.
   fn configure_app<T: RuntimeFactors>(
     &self,
     _ctx: ConfigureAppContext<T, Self>,
   ) -> anyhow::Result<Self::AppState> {
-    // Called by FactorsExecutor::load_app.
-    // panic!("MyFactor::configure_app");
-    Ok(())
+    return Ok(());
   }
 
+  /// Called by FactorsExecutorApp::prepare
   fn prepare<T: RuntimeFactors>(
     &self,
     mut _ctx: PrepareContext<T, Self>,
   ) -> anyhow::Result<Self::InstanceBuilder> {
-    // Called by FactorsExecutorApp::prepare
-    // panic!("MyFactor::prepare");
-    Ok(MyFactorStateInstanceBuilder {})
+    return Ok(MyFactorStateInstanceBuilder {});
   }
 }
 
@@ -68,42 +63,15 @@ impl MyFactors {
     allow_transient_writes: bool,
   ) -> anyhow::Result<Self> {
     Ok(Self {
-      wasi: wasi_factor(working_dir, allow_transient_writes),
+      wasi: WasiFactor::new(SpinFilesMounter::new(working_dir, allow_transient_writes)),
       variables: VariablesFactor::default(),
       key_value: KeyValueFactor::new(),
-      outbound_networking: outbound_networking_factor(),
+      outbound_networking: helper::outbound_networking_factor(),
       outbound_http: OutboundHttpFactor::default(),
 
       my_factor: MyFactor {},
     })
   }
-}
-
-fn wasi_factor(working_dir: impl Into<PathBuf>, allow_transient_writes: bool) -> WasiFactor {
-  WasiFactor::new(SpinFilesMounter::new(working_dir, allow_transient_writes))
-}
-
-fn outbound_networking_factor() -> OutboundNetworkingFactor {
-  fn disallowed_host_handler(scheme: &str, authority: &str) {
-    let host_pattern = format!("{scheme}://{authority}");
-    tracing::error!("Outbound network destination not allowed: {host_pattern}");
-    if scheme.starts_with("http") && authority == "self" {
-      terminal::warn!(
-        "A component tried to make an HTTP request to its own app but it does not have permission."
-      );
-    } else {
-      terminal::warn!(
-        "A component tried to make an outbound network connection to disallowed destination '{host_pattern}'."
-      );
-    };
-    eprintln!(
-      "To allow this request, add 'allowed_outbound_hosts = [\"{host_pattern}\"]' to the manifest component section."
-    );
-  }
-
-  let mut factor = OutboundNetworkingFactor::new();
-  factor.set_disallowed_host_handler(disallowed_host_handler);
-  factor
 }
 
 #[cfg(test)]
