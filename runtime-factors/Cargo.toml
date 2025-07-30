@@ -1,0 +1,27 @@
+[package]
+name = "runtime-factors"
+version = "0.1.0"
+edition = "2024"
+autobenches = false
+
+[dependencies]
+anyhow = "1.0.98"
+clap = { version = "3.2", features = ["derive", "env"] }
+spin-common = { workspace = true }
+spin-factor-key-value = { workspace = true }
+spin-factor-llm = { workspace = true }
+spin-factor-outbound-http = { workspace = true }
+spin-factor-outbound-mqtt = { workspace = true }
+spin-factor-outbound-mysql = { workspace = true }
+spin-factor-outbound-networking = { workspace = true }
+spin-factor-outbound-pg = { workspace = true }
+spin-factor-outbound-redis = { workspace = true }
+spin-factor-sqlite = { workspace = true }
+spin-factor-variables = { workspace = true }
+spin-factor-wasi = { workspace = true }
+spin-factors = { workspace = true }
+spin-factors-executor = { workspace = true }
+spin-runtime-config = { workspace = true }
+spin-trigger = { workspace = true }
+terminal = { workspace = true }
+tracing = "0.1.41"

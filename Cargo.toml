@@ -1,39 +1,22 @@
-[package]
-name = "spin-runtime-factors"
-version.workspace = true
-authors.workspace = true
-edition.workspace = true
-license.workspace = true
-homepage.workspace = true
-repository.workspace = true
-rust-version.workspace = true
+[workspace]
+resolver = "2"
+members = ["runtime-factors"]
 
-[features]
-llm = ["spin-factor-llm/llm"]
-llm-metal = ["spin-factor-llm/llm-metal"]
-llm-cublas = ["spin-factor-llm/llm-cublas"]
-
-[dependencies]
-anyhow = { workspace = true }
-clap = { workspace = true, features = ["derive", "env"] }
-spin-common = { path = "../common" }
-spin-factor-key-value = { path = "../factor-key-value" }
-spin-factor-llm = { path = "../factor-llm" }
-spin-factor-outbound-http = { path = "../factor-outbound-http" }
-spin-factor-outbound-mqtt = { path = "../factor-outbound-mqtt" }
-spin-factor-outbound-mysql = { path = "../factor-outbound-mysql" }
-spin-factor-outbound-networking = { path = "../factor-outbound-networking" }
-spin-factor-outbound-pg = { path = "../factor-outbound-pg" }
-spin-factor-outbound-redis = { path = "../factor-outbound-redis" }
-spin-factor-sqlite = { path = "../factor-sqlite" }
-spin-factor-variables = { path = "../factor-variables" }
-spin-factor-wasi = { path = "../factor-wasi" }
-spin-factors = { path = "../factors" }
-spin-factors-executor = { path = "../factors-executor" }
-spin-runtime-config = { path = "../runtime-config" }
-spin-trigger = { path = "../trigger" }
-terminal = { path = "../terminal" }
-tracing = { workspace = true }
-
-[lints]
-workspace = true
+[workspace.dependencies]
+spin-common = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-key-value = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-llm = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-outbound-http = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-outbound-mqtt = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-outbound-mysql = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-outbound-networking = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-outbound-pg = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-outbound-redis = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-sqlite = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-variables = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factor-wasi = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factors = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-factors-executor = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-runtime-config = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+spin-trigger = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
+terminal = { git = "https://github.com/spinframework/spin", tag = "v3.3.1" }
