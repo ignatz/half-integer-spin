@@ -7,18 +7,18 @@ use std::path::PathBuf;
 use anyhow::Context as _;
 use spin_common::arg_parser::parse_kv;
 use spin_factor_key_value::KeyValueFactor;
-use spin_factor_llm::LlmFactor;
+// use spin_factor_llm::LlmFactor;
 use spin_factor_outbound_http::OutboundHttpFactor;
-use spin_factor_outbound_mqtt::{NetworkedMqttClient, OutboundMqttFactor};
-use spin_factor_outbound_mysql::OutboundMysqlFactor;
+// use spin_factor_outbound_mqtt::{NetworkedMqttClient, OutboundMqttFactor};
+// use spin_factor_outbound_mysql::OutboundMysqlFactor;
 use spin_factor_outbound_networking::OutboundNetworkingFactor;
-use spin_factor_outbound_pg::OutboundPgFactor;
-use spin_factor_outbound_redis::OutboundRedisFactor;
-use spin_factor_sqlite::SqliteFactor;
+// use spin_factor_outbound_pg::OutboundPgFactor;
+// use spin_factor_outbound_redis::OutboundRedisFactor;
+// use spin_factor_sqlite::SqliteFactor;
 use spin_factor_variables::VariablesFactor;
 use spin_factor_wasi::{WasiFactor, spin::SpinFilesMounter};
 use spin_factors::RuntimeFactors;
-use spin_runtime_config::{ResolvedRuntimeConfig, TomlRuntimeConfigSource};
+// use spin_runtime_config::{ResolvedRuntimeConfig, TomlRuntimeConfigSource};
 
 #[derive(RuntimeFactors)]
 pub struct TriggerFactors {
@@ -27,12 +27,12 @@ pub struct TriggerFactors {
     pub key_value: KeyValueFactor,
     pub outbound_networking: OutboundNetworkingFactor,
     pub outbound_http: OutboundHttpFactor,
-    pub sqlite: SqliteFactor,
-    pub redis: OutboundRedisFactor,
-    pub mqtt: OutboundMqttFactor,
-    pub pg: OutboundPgFactor,
-    pub mysql: OutboundMysqlFactor,
-    pub llm: LlmFactor,
+    // pub sqlite: SqliteFactor,
+    // pub redis: OutboundRedisFactor,
+    // pub mqtt: OutboundMqttFactor,
+    // pub pg: OutboundPgFactor,
+    // pub mysql: OutboundMysqlFactor,
+    // pub llm: LlmFactor,
 }
 
 impl TriggerFactors {
@@ -47,15 +47,15 @@ impl TriggerFactors {
             key_value: KeyValueFactor::new(),
             outbound_networking: outbound_networking_factor(),
             outbound_http: OutboundHttpFactor::default(),
-            sqlite: SqliteFactor::new(),
-            redis: OutboundRedisFactor::new(),
-            mqtt: OutboundMqttFactor::new(NetworkedMqttClient::creator()),
-            pg: OutboundPgFactor::new(),
-            mysql: OutboundMysqlFactor::new(),
-            llm: LlmFactor::new(
-                spin_factor_llm::spin::default_engine_creator(state_dir)
-                    .context("failed to configure LLM factor")?,
-            ),
+            // sqlite: SqliteFactor::new(),
+            // redis: OutboundRedisFactor::new(),
+            // mqtt: OutboundMqttFactor::new(NetworkedMqttClient::creator()),
+            // pg: OutboundPgFactor::new(),
+            // mysql: OutboundMysqlFactor::new(),
+            // llm: LlmFactor::new(
+            //     spin_factor_llm::spin::default_engine_creator(state_dir)
+            //         .context("failed to configure LLM factor")?,
+            // ),
         })
     }
 }
@@ -110,16 +110,16 @@ pub struct TriggerAppArgs {
     pub max_instance_memory: Option<usize>,
 }
 
-impl From<ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>> for TriggerFactorsRuntimeConfig {
-    fn from(value: ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>) -> Self {
-        value.runtime_config
-    }
-}
+// impl From<ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>> for TriggerFactorsRuntimeConfig {
+//     fn from(value: ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>) -> Self {
+//         value.runtime_config
+//     }
+// }
 
-impl TryFrom<TomlRuntimeConfigSource<'_, '_>> for TriggerFactorsRuntimeConfig {
-    type Error = anyhow::Error;
-
-    fn try_from(value: TomlRuntimeConfigSource<'_, '_>) -> Result<Self, Self::Error> {
-        Self::from_source(value)
-    }
-}
+// impl TryFrom<TomlRuntimeConfigSource<'_, '_>> for TriggerFactorsRuntimeConfig {
+//     type Error = anyhow::Error;
+//
+//     fn try_from(value: TomlRuntimeConfigSource<'_, '_>) -> Result<Self, Self::Error> {
+//         Self::from_source(value)
+//     }
+// }
