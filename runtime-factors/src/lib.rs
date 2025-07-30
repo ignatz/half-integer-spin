@@ -4,7 +4,6 @@ pub use build::FactorsBuilder;
 
 use std::path::PathBuf;
 
-use spin_common::arg_parser::parse_kv;
 use spin_factor_key_value::KeyValueFactor;
 // use spin_factor_llm::LlmFactor;
 use spin_factor_outbound_http::OutboundHttpFactor;
@@ -16,16 +15,60 @@ use spin_factor_outbound_networking::OutboundNetworkingFactor;
 // use spin_factor_sqlite::SqliteFactor;
 use spin_factor_variables::VariablesFactor;
 use spin_factor_wasi::{WasiFactor, spin::SpinFilesMounter};
-use spin_factors::RuntimeFactors;
+use spin_factors::{
+  ConfigureAppContext, Factor, PrepareContext, RuntimeFactors, SelfInstanceBuilder,
+};
 // use spin_runtime_config::{ResolvedRuntimeConfig, TomlRuntimeConfigSource};
 
+pub struct MyFactorStateInstanceBuilder {}
+
+impl SelfInstanceBuilder for MyFactorStateInstanceBuilder {}
+
+pub struct MyFactor {}
+
+impl Factor for MyFactor {
+  type RuntimeConfig = ();
+  type AppState = ();
+  type InstanceBuilder = MyFactorStateInstanceBuilder;
+
+  fn init(&mut self, _ctx: &mut impl spin_factors::InitContext<Self>) -> anyhow::Result<()> {
+    // Called by TestEnvironment::new.
+    // panic!("MyFactor::init");
+
+    // Here we can register outbound interfaces, e.g. for outbound http requests.
+    // ctx.link_bindings(spin_world::v1::http::add_to_linker::<_, FactorData<Self>>)?;
+    // wasi::add_to_linker(ctx)?;
+    Ok(())
+  }
+
+  fn configure_app<T: RuntimeFactors>(
+    &self,
+    _ctx: ConfigureAppContext<T, Self>,
+  ) -> anyhow::Result<Self::AppState> {
+    // Called by FactorsExecutor::load_app.
+    // panic!("MyFactor::configure_app");
+    Ok(())
+  }
+
+  fn prepare<T: RuntimeFactors>(
+    &self,
+    mut _ctx: PrepareContext<T, Self>,
+  ) -> anyhow::Result<Self::InstanceBuilder> {
+    // Called by FactorsExecutorApp::prepare
+    // panic!("MyFactor::prepare");
+    Ok(MyFactorStateInstanceBuilder {})
+  }
+}
+
 #[derive(RuntimeFactors)]
-pub struct TriggerFactors {
+pub struct MyFactors {
   pub wasi: WasiFactor,
   pub variables: VariablesFactor,
   pub key_value: KeyValueFactor,
   pub outbound_networking: OutboundNetworkingFactor,
   pub outbound_http: OutboundHttpFactor,
+
+  pub my_factor: MyFactor,
   // pub sqlite: SqliteFactor,
   // pub redis: OutboundRedisFactor,
   // pub mqtt: OutboundMqttFactor,
@@ -34,7 +77,7 @@ pub struct TriggerFactors {
   // pub llm: LlmFactor,
 }
 
-impl TriggerFactors {
+impl MyFactors {
   pub fn new(
     state_dir: Option<PathBuf>,
     working_dir: impl Into<PathBuf>,
@@ -46,6 +89,8 @@ impl TriggerFactors {
       key_value: KeyValueFactor::new(),
       outbound_networking: outbound_networking_factor(),
       outbound_http: OutboundHttpFactor::default(),
+
+      my_factor: MyFactor {},
       // sqlite: SqliteFactor::new(),
       // redis: OutboundRedisFactor::new(),
       // mqtt: OutboundMqttFactor::new(NetworkedMqttClient::creator()),
@@ -86,44 +131,6 @@ fn outbound_networking_factor() -> OutboundNetworkingFactor {
   factor
 }
 
-/// Options for building a [`TriggerFactors`].
-#[cfg(feature = "spin_trigger")]
-#[derive(Default, clap::Args)]
-pub struct TriggerAppArgs {
-  /// Set the static assets of the components in the temporary directory as writable.
-  #[clap(long = "allow-transient-write")]
-  pub allow_transient_write: bool,
-
-  /// Set a key/value pair (key=value) in the application's
-  /// default store. Any existing value will be overwritten.
-  /// Can be used multiple times.
-  #[clap(long = "key-value", parse(try_from_str = parse_kv))]
-  pub key_values: Vec<(String, String)>,
-
-  /// Run a SQLite statement such as a migration against the default database.
-  /// To run from a file, prefix the filename with @ e.g. spin up --sqlite @migration.sql
-  #[clap(long = "sqlite")]
-  pub sqlite_statements: Vec<String>,
-
-  /// Sets the maxmimum memory allocation limit for an instance in bytes.
-  #[clap(long, env = "SPIN_MAX_INSTANCE_MEMORY")]
-  pub max_instance_memory: Option<usize>,
-}
-
-// impl From<ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>> for TriggerFactorsRuntimeConfig {
-//     fn from(value: ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>) -> Self {
-//         value.runtime_config
-//     }
-// }
-
-// impl TryFrom<TomlRuntimeConfigSource<'_, '_>> for TriggerFactorsRuntimeConfig {
-//     type Error = anyhow::Error;
-//
-//     fn try_from(value: TomlRuntimeConfigSource<'_, '_>) -> Result<Self, Self::Error> {
-//         Self::from_source(value)
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
   use spin_app::{App, AppComponent};
@@ -139,7 +146,7 @@ mod tests {
   async fn instance_builder_works() -> anyhow::Result<()> {
     let cwd = std::env::current_dir().unwrap();
 
-    let factors = TriggerFactors::new(
+    let factors = MyFactors::new(
       /* state_dir= */ Some(cwd.clone()),
       /* working_dir= */ cwd,
       /* allow_transient_writes */ true,
@@ -151,15 +158,17 @@ mod tests {
     let app = App::new(/*id=*/ "test-app", locked);
 
     let engine_builder = spin_core::Engine::builder(&Config::default())?;
+    // let linker = engine_builder.linker();
+
     let executor = Arc::new(FactorsExecutor::new(engine_builder, env.factors)?);
 
     let wasm_module = std::fs::read("../simple.wasm")?;
-    Module::new(executor.core_engine().as_ref(), &wasm_module)?;
+    let _module = Module::new(executor.core_engine().as_ref(), &wasm_module)?;
 
     struct DummyComponentLoader {}
 
     #[async_trait]
-    impl ComponentLoader<TriggerFactors, ()> for DummyComponentLoader {
+    impl ComponentLoader<MyFactors, ()> for DummyComponentLoader {
       async fn load_component(
         &self,
         engine: &spin_core::wasmtime::Engine,
@@ -169,16 +178,16 @@ mod tests {
       }
     }
 
-    let factors_app = executor
+    let factors_executor_app = executor
       .load_app(
         app,
-        TriggerFactorsRuntimeConfig::default(),
+        MyFactorsRuntimeConfig::default(),
         &DummyComponentLoader {},
       )
       .await?;
 
     let (instance, mut store) = {
-      let mut instance_builder = factors_app.prepare(/*component_id=*/ "empty")?;
+      let mut instance_builder = factors_executor_app.prepare(/*component_id=*/ "empty")?;
 
       assert_eq!(instance_builder.app_component().id(), "empty");
 
@@ -197,6 +206,14 @@ mod tests {
         .get_export_index(&mut store, None, "wasi:cli/run@0.2.0")
         .is_none()
     );
+
+    assert!(
+      instance
+        .get_export_index(&mut store, None, "fermyon:spin/inbound-http")
+        .is_none()
+    );
+
+    // let cmd = Command::instantiate_async(store.as_mut(), module, executor.core_engine()).await?;
 
     // let func = instance
     //   .get_export_index(&mut store, None, "wasi:cli/run@0.2.0");

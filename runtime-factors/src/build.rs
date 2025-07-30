@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::{TriggerFactors, TriggerFactorsRuntimeConfig};
+use super::{MyFactors, MyFactorsRuntimeConfig};
 
 use anyhow::Context as _;
 use spin_factors::RuntimeFactors;
@@ -15,28 +15,53 @@ use spin_trigger::cli::{
   StdioLoggingExecutorHooks,
 };
 
-/// A [`RuntimeFactorsBuilder`] for [`TriggerFactors`].
+/// A [`RuntimeFactorsBuilder`] for [`MyFactors`].
 pub struct FactorsBuilder;
 
 pub struct MyRuntimeConfig;
 
-impl Into<<TriggerFactors as RuntimeFactors>::RuntimeConfig> for MyRuntimeConfig {
-  fn into(self) -> <TriggerFactors as RuntimeFactors>::RuntimeConfig {
-    return TriggerFactorsRuntimeConfig {
+impl Into<<MyFactors as RuntimeFactors>::RuntimeConfig> for MyRuntimeConfig {
+  fn into(self) -> <MyFactors as RuntimeFactors>::RuntimeConfig {
+    return MyFactorsRuntimeConfig {
       wasi: None,
       variables: None,
       key_value: None,
       outbound_networking: None,
       outbound_http: None,
+      my_factor: None,
     };
   }
+}
+
+/// Options for building a [`MyFactors`].
+#[cfg(feature = "spin_trigger")]
+#[derive(Default, clap::Args)]
+pub struct TriggerAppArgs {
+  /// Set the static assets of the components in the temporary directory as writable.
+  #[clap(long = "allow-transient-write")]
+  pub allow_transient_write: bool,
+
+  /// Set a key/value pair (key=value) in the application's
+  /// default store. Any existing value will be overwritten.
+  /// Can be used multiple times.
+  #[clap(long = "key-value", parse(try_from_str = parse_kv))]
+  pub key_values: Vec<(String, String)>,
+
+  /// Run a SQLite statement such as a migration against the default database.
+  /// To run from a file, prefix the filename with @ e.g. spin up --sqlite @migration.sql
+  #[clap(long = "sqlite")]
+  pub sqlite_statements: Vec<String>,
+
+  /// Sets the maxmimum memory allocation limit for an instance in bytes.
+  #[clap(long, env = "SPIN_MAX_INSTANCE_MEMORY")]
+  pub max_instance_memory: Option<usize>,
 }
 
 #[cfg(feature = "spin_trigger")]
 impl RuntimeFactorsBuilder for FactorsBuilder {
   type CliArgs = super::TriggerAppArgs;
-  type Factors = TriggerFactors;
-  // type RuntimeConfig = ResolvedRuntimeConfig<TriggerFactorsRuntimeConfig>;
+  type Factors = MyFactors;
+  // type RuntimeConfig = ResolvedRuntimeConfig<MyFactorsRuntimeConfig>;
   type RuntimeConfig = MyRuntimeConfig;
 
   fn build(
@@ -52,7 +77,7 @@ impl RuntimeFactorsBuilder for FactorsBuilder {
     // runtime_config.summarize(config.runtime_config_file.as_deref());
     let runtime_config = MyRuntimeConfig {};
 
-    let factors = TriggerFactors::new(
+    let factors = MyFactors::new(
       None,
       // runtime_config.state_dir(),
       config.working_dir.clone(),

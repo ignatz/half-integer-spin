@@ -37,3 +37,4 @@ spin-core = { workspace = true }
 spin-factors-executor = { workspace = true }
 spin-factors-test = { workspace = true }
 tokio = { version = "^1.38.0", features = ["macros", "rt-multi-thread"] }
+# wasmtime-wasi = "35.0.0"
