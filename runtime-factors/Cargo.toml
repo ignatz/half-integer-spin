@@ -29,3 +29,11 @@ spin-factors-executor = { workspace = true }
 spin-trigger = { workspace = true, optional = true }
 terminal = { workspace = true }
 tracing = "0.1.41"
+
+[dev-dependencies]
+async-trait = "0.1.88"
+spin-app = { workspace = true }
+spin-core = { workspace = true }
+spin-factors-executor = { workspace = true }
+spin-factors-test = { workspace = true }
+tokio = { version = "^1.38.0", features = ["macros", "rt-multi-thread"] }
