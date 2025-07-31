@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  let mut instance_builder = factors_executor_app.prepare(/*component_id=*/ "empty")?;
+  let mut instance_builder = factors_executor_app.prepare(/* component_id= */ "empty")?;
   instance_builder
     .store_builder()
     .max_memory_size(100_000_000);
@@ -73,6 +73,7 @@ async fn build_app() -> anyhow::Result<App> {
 
       [component.empty]
       source = "does-not-exist.wasm"
+      allowed_outbound_hosts = ["http://self", "https://self", "https://google.com"]
   };
 
   let toml_str = toml::to_string(&manifest)?;
@@ -81,7 +82,7 @@ async fn build_app() -> anyhow::Result<App> {
   std::fs::write(&path, toml_str)?;
 
   let locked = spin_loader::from_file(&path, FilesMountStrategy::Direct, None).await?;
-  return Ok(App::new(/*id=*/ "test-app", locked));
+  return Ok(App::new(/* id= */ "test-app", locked));
 }
 
 struct FileComponentLoader(std::path::PathBuf);
