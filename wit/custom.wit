@@ -1,0 +1,12 @@
+package half-spin:example;
+
+interface custom-endpoint  {
+  handle-request: func();
+}
+
+world custom-world {
+  // Pull in WASI http interface for outbound requests.
+  // import wasi:http/outgoing-handler@0.2.2;
+
+  export custom-endpoint;
+}
