@@ -46,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
   let wasi_factor = instance_builder.factor_builder::<WasiFactor>().unwrap();
   wasi_factor.stdout_pipe(std::io::stdout());
   wasi_factor.stderr_pipe(std::io::stderr());
+  wasi_factor.args(["foo"]);
 
   let (instance, mut store): (
     spin_core::Instance,

@@ -50,7 +50,11 @@ async fn main() -> Result<()> {
   let mut store = Store::new(
     &engine,
     State {
-      wasi_ctx: WasiCtxBuilder::new().inherit_stdio().inherit_args().build(),
+      wasi_ctx: WasiCtxBuilder::new()
+        .inherit_stdio()
+        .inherit_args()
+        .args(&["bar"])
+        .build(),
       resource_table: ResourceTable::new(),
       http: WasiHttpCtx::new(),
     },
