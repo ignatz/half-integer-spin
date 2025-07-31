@@ -14,9 +14,6 @@ use host_example::{MyFactors, MyFactorsInstanceState, MyFactorsRuntimeConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-  let wasm_source_file = std::env::args()
-    .nth(1)
-    .unwrap_or("target/wasm32-wasip2/debug/example_wasm.wasm".to_string());
   let cwd = std::env::current_dir().unwrap();
 
   let mut factors = MyFactors::new(
@@ -26,26 +23,14 @@ async fn main() -> anyhow::Result<()> {
   )
   .unwrap();
 
-  let engine = Engine::new(WasmConfig::new().async_support(true))?;
-  let mut linker = Linker::<MyFactorsInstanceState>::new(&engine);
-
-  factors.init(&mut linker)?;
-
   let engine_builder = spin_core::Engine::builder(&Config::default())?;
   let executor = Arc::new(FactorsExecutor::new(engine_builder, factors)?);
-
-  // NOTE: `spin build` seems to produce WASM modules, rather than WASM components :shrug:.
-  let bytes = std::fs::read(&wasm_source_file)?;
-
-  //let module = Module::new(executor.core_engine().as_ref(), &bytes)?;
-  let component = Component::new(executor.core_engine().as_ref(), &bytes)?;
-  linker.instantiate_pre(&component)?;
 
   let factors_executor_app =
     build_factors_executor_app(executor, MyFactorsRuntimeConfig::default()).await?;
 
   let mut instance_builder = factors_executor_app.prepare(/*component_id=*/ "empty")?;
-  instance_builder.store_builder().max_memory_size(1_000_000);
+  instance_builder.store_builder().max_memory_size(10_000_000);
   instance_builder
     .factor_builder::<WasiFactor>()
     .unwrap()
@@ -82,7 +67,10 @@ async fn build_factors_executor_app(
       engine: &spin_core::wasmtime::Engine,
       _component: &AppComponent,
     ) -> anyhow::Result<Component> {
-      return Component::new(engine, b"(component)");
+      let wasm_source_file = std::env::args()
+        .nth(1)
+        .unwrap_or("target/wasm32-wasip2/debug/example_wasm.wasm".to_string());
+      Component::from_file(engine, wasm_source_file)
     }
   }
 
