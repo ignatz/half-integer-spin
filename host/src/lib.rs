@@ -6,7 +6,7 @@ use spin_factor_outbound_networking::OutboundNetworkingFactor;
 use spin_factor_variables::VariablesFactor;
 use spin_factor_wasi::{WasiFactor, spin::SpinFilesMounter};
 use spin_factors::{
-  ConfigureAppContext, Factor, FactorData, PrepareContext, RuntimeFactors, SelfInstanceBuilder,
+  ConfigureAppContext, Factor, PrepareContext, RuntimeFactors, SelfInstanceBuilder,
 };
 use std::path::PathBuf;
 
