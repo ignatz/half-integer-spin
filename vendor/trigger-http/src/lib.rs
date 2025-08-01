@@ -7,7 +7,7 @@ mod server;
 mod spin;
 mod tls;
 mod wagi;
-mod wasi;
+pub mod wasi;
 
 use std::{
     error::Error,
@@ -16,7 +16,7 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::{bail, Context};
+use anyhow::{Context, bail};
 use clap::Args;
 use serde::Deserialize;
 use spin_app::App;
@@ -24,6 +24,7 @@ use spin_factors::RuntimeFactors;
 use spin_trigger::Trigger;
 use wasmtime_wasi_http::bindings::http::types::ErrorCode;
 
+pub use server::HttpExecutor;
 pub use server::HttpServer;
 
 pub use tls::TlsConfig;
@@ -153,9 +154,13 @@ impl HttpTrigger {
         }
         if let Some(TriggerMetadata { base: Some(base) }) = app.get_trigger_metadata("http")? {
             if base == "/" {
-                tracing::warn!("This application has the deprecated trigger 'base' set to the default value '/'. This may be an error in the future!");
+                tracing::warn!(
+                    "This application has the deprecated trigger 'base' set to the default value '/'. This may be an error in the future!"
+                );
             } else {
-                bail!("This application is using the deprecated trigger 'base' field. The base must be prepended to each [[trigger.http]]'s 'route'.")
+                bail!(
+                    "This application is using the deprecated trigger 'base' field. The base must be prepended to each [[trigger.http]]'s 'route'."
+                )
             }
         }
         Ok(())

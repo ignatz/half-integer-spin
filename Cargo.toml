@@ -27,6 +27,7 @@ spin-factors = { git = "https://github.com/spinframework/spin", rev = "5947a2cfb
 spin-factors-executor = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-factors-test = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-http = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
+spin-http-routes = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-loader = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-telemetry = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-trigger = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }

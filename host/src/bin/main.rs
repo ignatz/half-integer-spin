@@ -1,12 +1,9 @@
 use spin_app::{App, AppComponent};
 use spin_core::{Component, Config, async_trait};
 use spin_factor_wasi::WasiFactor;
-// use spin_factors::{
-//   RuntimeFactors,
-//   wasmtime::{Config as WasmConfig, Engine, component::Linker},
-// };
 use spin_factors_executor::{ComponentLoader, FactorsExecutor};
 use spin_loader::FilesMountStrategy;
+use spin_trigger_http::HttpExecutor;
 use std::sync::Arc;
 use toml::toml;
 
@@ -38,26 +35,62 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-  let mut instance_builder = factors_executor_app.prepare(/* component_id= */ "empty")?;
-  instance_builder
-    .store_builder()
-    .max_memory_size(100_000_000);
+  let new_instance_builder = || {
+    let mut instance_builder = factors_executor_app
+      .prepare(/* component_id= */ "empty")
+      .unwrap();
+    instance_builder
+      .store_builder()
+      .max_memory_size(100_000_000);
 
-  let wasi_factor = instance_builder.factor_builder::<WasiFactor>().unwrap();
-  wasi_factor.stdout_pipe(std::io::stdout());
-  wasi_factor.stderr_pipe(std::io::stderr());
-  wasi_factor.args(["foo"]);
+    let wasi_factor = instance_builder.factor_builder::<WasiFactor>().unwrap();
+    wasi_factor.stdout_pipe(std::io::stdout());
+    wasi_factor.stderr_pipe(std::io::stderr());
+    wasi_factor.args(["foo"]);
 
-  let (instance, mut store): (
-    spin_core::Instance,
-    spin_core::Store<spin_factors_executor::InstanceState<MyFactorsInstanceState, ()>>,
-  ) = instance_builder.instantiate(()).await?;
+    return instance_builder;
+  };
 
-  let bindings = host_example::CustomWorld::new(&mut store, &instance)?;
-  bindings
-    .half_spin_example_custom_endpoint()
-    .call_handle_request(&mut store)
-    .await?;
+  let instance_pre = factors_executor_app.get_instance_pre("empty")?;
+
+  let request: http::Request<wasmtime_wasi_http::body::HyperIncomingBody> =
+    http::Request::builder()
+      .method("GET")
+      .uri("https://www.rust-lang.org/")
+      .header("X-Custom-Foo", "Bar")
+      .body(wasmtime_wasi_http::body::HyperIncomingBody::default())
+      .unwrap();
+
+  let call_http = async || {
+    let http_executor = spin_trigger_http::wasi::WasiHttpExecutor {
+      handler_type: &spin_http::trigger::HandlerType::from_instance_pre(&instance_pre)?,
+    };
+    return http_executor
+      .execute(
+        new_instance_builder(),
+        &spin_http_routes::RouteMatch::synthetic("empty".to_string(), "/".to_string()),
+        request,
+        "127.0.0.1".parse()?,
+      )
+      .await;
+  };
+
+  if let Err(err) = call_http().await {
+    println!("Incoming HTTP: {err}");
+  }
+
+  {
+    let (instance, mut store): (
+      spin_core::Instance,
+      spin_core::Store<spin_factors_executor::InstanceState<MyFactorsInstanceState, ()>>,
+    ) = new_instance_builder().instantiate(()).await?;
+
+    let bindings = host_example::CustomWorld::new(&mut store, &instance)?;
+    bindings
+      .half_spin_example_custom_endpoint()
+      .call_handle_request(&mut store)
+      .await?;
+  }
 
   println!("Finished");
   return Ok(());

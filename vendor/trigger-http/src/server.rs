@@ -516,7 +516,7 @@ fn set_req_uri(req: &mut Request<Body>, scheme: Scheme) -> anyhow::Result<()> {
 }
 
 /// An HTTP executor.
-pub(crate) trait HttpExecutor {
+pub trait HttpExecutor {
     fn execute<F: RuntimeFactors>(
         &self,
         instance_builder: TriggerInstanceBuilder<F>,
