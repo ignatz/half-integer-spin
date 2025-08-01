@@ -1,4 +1,4 @@
-use spin_sdk::http;
+use spin_sdk::{http};
 
 wit_bindgen::generate!({
     world: "half-spin:example/custom-world",
@@ -30,8 +30,21 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
       addr,
     )));
 
-    println!("{addr} /get: {res:?}");
+    println!("Hello: {addr} /get: {res:?}");
   }
 }
 
 export!(CustomEndpoint);
+
+/// A Spin HTTP component that internally routes requests.
+#[spin_sdk::http_component]
+fn handle_route(req: http::Request) -> http::Response {
+    pub fn root(_req: http::Request, _params: http::Params) -> http::Response {
+        println!("Hello! - from root HTTP handler");
+        return http::Response::new(200, "response".to_string());
+    }
+
+    let mut router = http::Router::new();
+    router.get("/", root);
+    return router.handle(req);
+}

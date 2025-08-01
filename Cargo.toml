@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "host",
-  "wasm/rust",
+  "guest/rust",
   "vendor/trigger-http",
 ]
 

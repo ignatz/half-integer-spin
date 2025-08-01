@@ -1,7 +1,10 @@
 use spin_app::{App, AppComponent};
 use spin_core::{Component, Config, async_trait};
 use spin_factor_wasi::WasiFactor;
-use spin_factors_executor::{ComponentLoader, FactorsExecutor};
+use spin_factors::RuntimeFactors;
+use spin_factors_executor::{
+  ComponentLoader, FactorsExecutor, FactorsExecutorApp, FactorsInstanceBuilder,
+};
 use spin_loader::FilesMountStrategy;
 use spin_trigger_http::HttpExecutor;
 use std::sync::Arc;
@@ -27,63 +30,23 @@ async fn main() -> anyhow::Result<()> {
   let engine_builder = spin_core::Engine::builder(&Config::default())?;
   let executor = Arc::new(FactorsExecutor::new(engine_builder, factors)?);
 
+  let (app, component_id) = build_app().await?;
   let factors_executor_app = executor
     .load_app(
-      build_app().await?,
+      app,
       MyFactorsRuntimeConfig::default(),
       &FileComponentLoader(wasm_source_file.into()),
     )
     .await?;
 
-  let new_instance_builder = || {
-    let mut instance_builder = factors_executor_app
-      .prepare(/* component_id= */ "empty")
-      .unwrap();
-    instance_builder
-      .store_builder()
-      .max_memory_size(100_000_000);
-
-    let wasi_factor = instance_builder.factor_builder::<WasiFactor>().unwrap();
-    wasi_factor.stdout_pipe(std::io::stdout());
-    wasi_factor.stderr_pipe(std::io::stderr());
-    wasi_factor.args(["foo"]);
-
-    return instance_builder;
-  };
-
-  let instance_pre = factors_executor_app.get_instance_pre("empty")?;
-
-  let request: http::Request<wasmtime_wasi_http::body::HyperIncomingBody> =
-    http::Request::builder()
-      .method("GET")
-      .uri("https://www.rust-lang.org/")
-      .header("X-Custom-Foo", "Bar")
-      .body(wasmtime_wasi_http::body::HyperIncomingBody::default())
-      .unwrap();
-
-  let call_http = async || {
-    let http_executor = spin_trigger_http::wasi::WasiHttpExecutor {
-      handler_type: &spin_http::trigger::HandlerType::from_instance_pre(&instance_pre)?,
-    };
-    return http_executor
-      .execute(
-        new_instance_builder(),
-        &spin_http_routes::RouteMatch::synthetic("empty".to_string(), "/".to_string()),
-        request,
-        "127.0.0.1".parse()?,
-      )
-      .await;
-  };
-
-  if let Err(err) = call_http().await {
-    println!("Incoming HTTP: {err}");
-  }
-
   {
+    // First call our own simple, custom API.
     let (instance, mut store): (
       spin_core::Instance,
       spin_core::Store<spin_factors_executor::InstanceState<MyFactorsInstanceState, ()>>,
-    ) = new_instance_builder().instantiate(()).await?;
+    ) = new_instance_builder(&factors_executor_app, &component_id)?
+      .instantiate(())
+      .await?;
 
     let bindings = host_example::CustomWorld::new(&mut store, &instance)?;
     bindings
@@ -92,11 +55,53 @@ async fn main() -> anyhow::Result<()> {
       .await?;
   }
 
+  {
+    // Then call the Inbound HTP endpoint.
+    let instance_pre = factors_executor_app.get_instance_pre(&component_id)?;
+    let http_executor = spin_trigger_http::wasi::WasiHttpExecutor {
+      handler_type: &spin_http::trigger::HandlerType::from_instance_pre(&instance_pre)?,
+    };
+    let response = http_executor
+      .execute(
+        new_instance_builder(&factors_executor_app, &component_id)?,
+        &spin_http_routes::RouteMatch::synthetic(component_id.clone(), "/".to_string()),
+        http::Request::builder()
+          .method("GET")
+          .uri("https://www.rust-lang.org/")
+          .body(wasmtime_wasi_http::body::HyperIncomingBody::default())?,
+        // Source address:
+        "127.0.0.1:5555".parse()?,
+      )
+      .await?;
+
+    println!("Got: {response:?}");
+  }
+
   println!("Finished");
   return Ok(());
 }
 
-async fn build_app() -> anyhow::Result<App> {
+fn new_instance_builder<'a, T: RuntimeFactors, U: Send + 'static>(
+  factors_executor_app: &'a FactorsExecutorApp<T, U>,
+  component_id: &str,
+) -> anyhow::Result<FactorsInstanceBuilder<'a, T, U>> {
+  let mut instance_builder = factors_executor_app.prepare(component_id)?;
+
+  instance_builder
+    .store_builder()
+    .max_memory_size(100_000_000);
+
+  let wasi_factor = instance_builder
+    .factor_builder::<WasiFactor>()
+    .ok_or_else(|| anyhow::anyhow!("Missing builder"))?;
+  wasi_factor.stdout_pipe(std::io::stdout());
+  wasi_factor.stderr_pipe(std::io::stderr());
+  wasi_factor.args(["foo"]);
+
+  return Ok(instance_builder);
+}
+
+async fn build_app() -> anyhow::Result<(App, String)> {
   let manifest = toml! {
       spin_manifest_version = 2
 
@@ -116,7 +121,7 @@ async fn build_app() -> anyhow::Result<App> {
   std::fs::write(&path, toml_str)?;
 
   let locked = spin_loader::from_file(&path, FilesMountStrategy::Direct, None).await?;
-  return Ok(App::new(/* id= */ "test-app", locked));
+  return Ok((App::new(/* id= */ "test-app", locked), "empty".to_string()));
 }
 
 struct FileComponentLoader(std::path::PathBuf);
