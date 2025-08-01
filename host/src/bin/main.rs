@@ -1,3 +1,4 @@
+use anyhow::Context;
 use spin_app::{App, AppComponent};
 use spin_core::{Component, Config, async_trait};
 use spin_factor_wasi::WasiFactor;
@@ -31,13 +32,16 @@ async fn main() -> anyhow::Result<()> {
   let executor = Arc::new(FactorsExecutor::new(engine_builder, factors)?);
 
   let (app, component_id) = build_app().await?;
+  // NOTE: If the loaded component has unsatisfied dependencies, the .load_app
+  // call will fail, e.g. if the client uses Postgres bindings.
   let factors_executor_app = executor
     .load_app(
       app,
       MyFactorsRuntimeConfig::default(),
       &FileComponentLoader(wasm_source_file.into()),
     )
-    .await?;
+    .await
+    .context(".load_app failed")?;
 
   {
     // First call our own simple, custom API.
