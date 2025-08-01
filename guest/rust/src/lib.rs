@@ -38,13 +38,14 @@ export!(CustomEndpoint);
 
 /// A Spin HTTP component that internally routes requests.
 #[spin_sdk::http_component]
-fn handle_route(req: http::Request) -> http::Response {
-  pub fn root(_req: http::Request, _params: http::Params) -> http::Response {
-    println!("Hello! - from root HTTP handler");
+async fn handle_route(req: http::Request) -> http::Response {
+  async fn root(_req: http::Request, _params: http::Params) -> http::Response {
+    let msg = std::future::ready("Hello! - from root HTTP handler").await;
+    println!("{msg}");
     return http::Response::new(200, "response".to_string());
   }
 
   let mut router = http::Router::new();
-  router.get("/", root);
-  return router.handle(req);
+  router.get_async("/", root);
+  return router.handle_async(req).await;
 }
