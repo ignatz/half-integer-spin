@@ -1,0 +1,37 @@
+[package]
+name = "spin-trigger-http"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+doctest = false
+
+[dependencies]
+anyhow = "1"
+clap = "3.2"
+futures = "0.3"
+http = "1"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["full"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "logging", "tls12"] }
+rustls-pki-types = "1.12"
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = "1.0"
+tokio = "1"
+tokio-rustls = { version = "0.26", default-features = false, features = ["logging", "tls12"] }
+tracing = { version = "0.1.41", features = ["log"] }
+wasmtime-wasi = { workspace = true }
+wasmtime-wasi-http = { workspace = true }
+
+spin-app = { workspace = true }
+spin-core = { workspace = true }
+spin-factor-outbound-http = { workspace = true }
+spin-factor-outbound-networking = { workspace = true }
+spin-factor-wasi = { workspace = true }
+spin-factors = { workspace = true }
+spin-http = { workspace = true }
+spin-telemetry = { workspace = true }
+spin-trigger = { workspace = true }
+spin-world = { workspace = true }
+terminal = { workspace = true }

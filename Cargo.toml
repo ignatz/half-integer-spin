@@ -3,10 +3,12 @@ resolver = "2"
 members = [
   "host",
   "wasm/rust",
+  "vendor/trigger-http",
 ]
 
 
 [workspace.dependencies]
+# Spin Runtime
 spin-app = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-common = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-core = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
@@ -24,9 +26,20 @@ spin-factor-wasi = { git = "https://github.com/spinframework/spin", rev = "5947a
 spin-factors = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-factors-executor = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-factors-test = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
+spin-http = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-loader = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-telemetry = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 spin-trigger = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
+spin-world = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 terminal = { git = "https://github.com/spinframework/spin", rev = "5947a2cfbccf641b128ac11d33164271287edba8" }
 
+# Spin SDK (i.e. guest-side)
 spin-sdk = { git = "https://github.com/spinframework/spin-rust-sdk.git", rev = "60d00f77fe0665d6eb8dde9581cf9481e126171f" }
+
+# Wasmtime - needs to match Spin's wasmtime.
+wasmtime = "35.0.0"
+wasmtime-wasi = "35.0.0"
+wasmtime-wasi-http = "35.0.0"
+
+# Vendored
+spin-trigger-http = { path = "vendor/trigger-http" }
