@@ -1,4 +1,4 @@
-mod http;
+use spin_sdk::http;
 
 wit_bindgen::generate!({
     world: "half-spin:example/custom-world",
@@ -24,18 +24,11 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
   fn handle_request() {
     println!("args: {:?}", std::env::args());
 
-    let addr = "google.com";
-    let res = http::request(
+    let addr = "https://google.com/index.html";
+    let res = http::run(http::send::<_, http::Response>(http::Request::new(
       http::Method::Get,
-      http::Scheme::Https,
       addr,
-      "/index.html",
-      None,
-      None,
-      None,
-      None,
-      None,
-    );
+    )));
 
     println!("{addr} /get: {res:?}");
   }
