@@ -30,7 +30,7 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
       addr,
     )));
 
-    println!("Hello {input}: /get({addr}): {res:?}");
+    println!("Hello from Rust guest [{input}]: /get({addr}) => {res:?}");
 
     return input;
   }

@@ -1,3 +1,4 @@
-# Example componetized JS guest
+# Example JS guest component
 
-Ripped straight from: https://github.com/bytecodealliance/ComponentizeJS/tree/main/examples/hello-world/guest
+Inspired by:
+  https://github.com/bytecodealliance/ComponentizeJS/tree/main/examples/hello-world/guest

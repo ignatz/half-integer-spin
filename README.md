@@ -3,18 +3,24 @@
 To build the guest WASM code:
 
 ```sh
-cd wasm/rust
-make
+make rust-guest
+```
+
+To build the JS guest:
+
+```sh
+cd guest/javascript/
+pnpm build
 ```
 
 then to run Spin-based host binary:
 
 ```sh
-cargo run --bin main -- target/wasm32-wasip2/debug/example_wasm.wasm
+make spin
 ```
 
 to run a minimal wasitime runtime:
 
 ```sh
-cargo run --bin basic -- target/wasm32-wasip2/debug/example_wasm.wasm
+make basic
 ```
