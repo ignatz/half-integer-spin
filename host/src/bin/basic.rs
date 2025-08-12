@@ -32,7 +32,7 @@ impl WasiHttpView for State {
 async fn main() -> Result<()> {
   let wasm_source_file = std::env::args()
     .nth(1)
-    .unwrap_or("target/wasm32-wasip2/debug/example_wasm.wasm".to_string());
+    .unwrap_or("target/wasm32-wasip2/debug/rust_guest.wasm".to_string());
 
   // Construct the wasm engine with async support enabled.
   let mut config = Config::new();
@@ -62,10 +62,13 @@ async fn main() -> Result<()> {
 
   let bindings =
     host_example::CustomWorld::instantiate_async(&mut store, &component, &linker).await?;
-  bindings
+
+  let input = "input".to_string();
+  let output = bindings
     .half_spin_example_custom_endpoint()
-    .call_handle_request(&mut store)
+    .call_handle_request(&mut store, &input)
     .await?;
+  assert_eq!(input, output);
 
   return Ok(());
 }

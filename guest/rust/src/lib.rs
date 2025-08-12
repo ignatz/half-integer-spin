@@ -21,7 +21,7 @@ struct CustomEndpoint;
 
 impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoint {
   // implement the guest function
-  fn handle_request() {
+  fn handle_request(input: String) -> String {
     println!("args: {:?}", std::env::args());
 
     let addr = "https://google.com/index.html";
@@ -30,7 +30,9 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
       addr,
     )));
 
-    println!("Hello: {addr} /get: {res:?}");
+    println!("Hello {input}: /get({addr}): {res:?}");
+
+    return input;
   }
 }
 

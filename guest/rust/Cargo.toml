@@ -1,5 +1,5 @@
 [package]
-name = "example-wasm"
+name = "rust-guest"
 version = "0.0.0"
 authors = ["someone"]
 edition = "2024"

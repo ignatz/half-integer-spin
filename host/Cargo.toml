@@ -5,8 +5,8 @@ edition = "2024"
 autobenches = false
 
 [[bin]]
-path = "src/bin/main.rs"
-name = "main"
+path = "src/bin/spin.rs"
+name = "spin"
 
 [[bin]]
 path = "src/bin/basic.rs"
