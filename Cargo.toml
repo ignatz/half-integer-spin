@@ -1,9 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-  "host",
+  "host/basic",
+  "host/spin",
   "guest/rust",
-  "vendor/trigger-http",
+  "vendor/trigger-http", "host/world",
 ]
 
 
@@ -41,6 +42,8 @@ spin-sdk = { git = "https://github.com/spinframework/spin-rust-sdk.git", rev = "
 wasmtime = "35.0.0"
 wasmtime-wasi = "35.0.0"
 wasmtime-wasi-http = "35.0.0"
+
+world = { path = "host/world" }
 
 # Vendored
 spin-trigger-http = { path = "vendor/trigger-http" }
