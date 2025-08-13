@@ -6,7 +6,7 @@ interface custom-endpoint  {
 
 world custom-world {
   // Pull in WASI http interface for outbound requests.
-  import wasi:http/outgoing-handler@0.2.2;
+  import wasi:http/outgoing-handler@0.2.6;
 
   export custom-endpoint;
 }

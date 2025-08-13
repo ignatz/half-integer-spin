@@ -4,11 +4,13 @@ wit_bindgen::generate!({
     world: "half-spin:example/custom-world",
     path: [
         // Order-sensitive: will import *.wit from the folder.
-        "../../wit/deps/wasi-random-0.2.2",
-        "../../wit/deps/wasi-io-0.2.2",
-        "../../wit/deps/wasi-cli-0.2.2",
-        "../../wit/deps/wasi-clocks-0.2.2",
-        "../../wit/deps/wasi-http-0.2.2",
+        "../../wit/deps-0.2.6/random",
+        "../../wit/deps-0.2.6/io",
+        "../../wit/deps-0.2.6/clocks",
+        "../../wit/deps-0.2.6/filesystem",
+        "../../wit/deps-0.2.6/sockets",
+        "../../wit/deps-0.2.6/cli",
+        "../../wit/deps-0.2.6/http",
         // Custom interface.
         "../../wit/custom.wit",
     ],
