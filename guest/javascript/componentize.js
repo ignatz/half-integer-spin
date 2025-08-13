@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { resolve, parse } from 'node:path';
 
 import { componentize } from '@bytecodealliance/componentize-js';
@@ -12,7 +12,8 @@ const wit = `../../wit/`;
 
 console.log(`compiling (${filename}, ${wit}) with AoT = ${enableAot}`);
 
-const { component } = await componentize(await readFile(filename, 'utf8'), {
+const { component } = await componentize({
+  sourcePath: filename,
   witPath: resolve(wit),
   enableAot
 });
