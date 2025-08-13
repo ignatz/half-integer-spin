@@ -17,8 +17,15 @@ default_features = []
 
 [dependencies]
 anyhow = "1.0.98"
+async-trait = "0.1.88"
+bytes = "1.10.1"
 clap = { version = "3.2", features = ["derive", "env"] }
+http = "1.3.1"
+http-body-util = "0.1.3"
+hyper = "1.6.0"
+spin-app = { workspace = true }
 spin-common = { workspace = true }
+spin-core = { workspace = true }
 spin-factor-key-value = { workspace = true }
 spin-factor-outbound-http = { workspace = true }
 spin-factor-outbound-networking = { workspace = true }
@@ -26,21 +33,18 @@ spin-factor-variables = { workspace = true }
 spin-factor-wasi = { workspace = true }
 spin-factors = { workspace = true }
 spin-factors-executor = { workspace = true }
-terminal = { workspace = true }
-tokio = { version = "^1.38.0", features = ["macros", "rt-multi-thread"] }
-tracing = "0.1.41"
-async-trait = "0.1.88"
-spin-app = { workspace = true }
-spin-core = { workspace = true }
 spin-http = { workspace = true }
 spin-http-routes = { workspace = true }
 spin-loader = { workspace = true }
 spin-telemetry = { workspace = true, features = ["testing"] }
 spin-trigger-http = { workspace = true }
 tempfile = "3.20.0"
+terminal = { workspace = true }
+tokio = { version = "^1.38.0", features = ["macros", "rt-multi-thread"] }
 toml = "0.9.4"
+tracing = "0.1.41"
+
 # Needs to match Spin's wasmtime.
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasmtime-wasi-http = { workspace = true }
-http = "1.3.1"

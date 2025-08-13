@@ -1907,8 +1907,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bytes",
  "clap 3.2.25",
  "http 1.3.1",
+ "http-body-util",
+ "hyper",
  "spin-app",
  "spin-common",
  "spin-core",
