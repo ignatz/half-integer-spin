@@ -131,6 +131,7 @@ async fn main() -> Result<()> {
     },
   );
 
+  // First call custom endpoint.
   let bindings = world::CustomWorld::instantiate_async(&mut store, &component, &linker).await?;
 
   let input = "input".to_string();
@@ -139,6 +140,46 @@ async fn main() -> Result<()> {
     .call_handle_request(&mut store, &input)
     .await?;
   assert_eq!(input, output);
+
+  // Then call incoming HTTP handler.
+  let proxy =
+    wasmtime_wasi_http::bindings::Proxy::instantiate_async(&mut store, &component, &linker).await?;
+
+  let request = hyper::Request::builder()
+    .uri("https://www.rust-lang.org/")
+    .body(BoxBody::new(
+      http_body_util::Full::new(Bytes::from_static(b"")).map_err(|_| unreachable!()),
+    ))
+    .unwrap();
+
+  let req = store.data_mut().new_incoming_request(
+    wasmtime_wasi_http::bindings::http::types::Scheme::Http,
+    request,
+  )?;
+
+  let (sender, receiver) = tokio::sync::oneshot::channel::<
+    Result<
+      hyper::Response<wasmtime_wasi_http::body::HyperOutgoingBody>,
+      wasmtime_wasi_http::bindings::http::types::ErrorCode,
+    >,
+  >();
+
+  let out = store.data_mut().new_response_outparam(sender)?;
+  let handle = wasmtime_wasi::runtime::spawn(async move {
+    proxy
+      .wasi_http_incoming_handler()
+      .call_handle(&mut store, req, out)
+      .await
+  });
+
+  let resp = receiver.await.unwrap().unwrap();
+  let (_parts, body) = resp.into_parts();
+  let bytes = body.collect().await.unwrap().to_bytes();
+  println!("Response body: {bytes:?}");
+
+  // Now that the response has been processed, we can wait on the guest to
+  // finish without deadlocking.
+  handle.await.unwrap();
 
   return Ok(());
 }
