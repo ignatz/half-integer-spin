@@ -5,11 +5,12 @@ use wasmtime::component::{Component, Linker, ResourceTable};
 use wasmtime::{Config, Engine, Result, Store};
 use wasmtime_wasi::p2::add_to_linker_async;
 use wasmtime_wasi::p2::{IoView, WasiCtx, WasiCtxBuilder, WasiView};
+use wasmtime_wasi::{DirPerms, FilePerms};
 use wasmtime_wasi_http::{WasiHttpCtx, WasiHttpView};
 
 struct State {
-  pub wasi_ctx: WasiCtx,
   pub resource_table: ResourceTable,
+  pub wasi_ctx: WasiCtx,
   pub http: WasiHttpCtx,
 }
 
@@ -91,7 +92,10 @@ async fn main() -> Result<()> {
   let engine = Engine::new(&config)?;
   let mut linker = Linker::new(&engine);
 
+  // Adds all the default implementations: clocks, random, filesystem, ...
   add_to_linker_async(&mut linker)?;
+
+  // Adds default HTTP handling - incoming and outgoing.
   wasmtime_wasi_http::add_only_http_to_linker_async(&mut linker)?;
 
   // Instantiate our component with the imports we've created, and run its function
@@ -104,6 +108,11 @@ async fn main() -> Result<()> {
         .inherit_stdio()
         .inherit_args()
         .args(&["bar"])
+        .allow_tcp(false)
+        .allow_udp(false)
+        .allow_ip_name_lookup(true)
+        .preopened_dir(".", "/host", DirPerms::READ, FilePerms::READ)
+        .unwrap()
         .build(),
       resource_table: ResourceTable::new(),
       http: WasiHttpCtx::new(),

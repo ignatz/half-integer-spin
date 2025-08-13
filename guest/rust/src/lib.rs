@@ -18,6 +18,8 @@ wit_bindgen::generate!({
     generate_all,
 });
 
+use crate::wasi::filesystem;
+
 // Implement the function exported in this world (see above).
 struct CustomEndpoint;
 
@@ -26,13 +28,17 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
   fn handle_request(input: String) -> String {
     println!("args: {:?}", std::env::args());
 
+    // TODO: PoC read from descriptos
+    let dirs: Vec<(filesystem::types::Descriptor, String)> =
+      filesystem::preopens::get_directories();
+
     let addr = "https://google.com/index.html";
     let res = http::run(http::send::<_, http::Response>(http::Request::new(
       http::Method::Get,
       addr,
     )));
 
-    println!("Hello from Rust guest [{input}]: /get({addr}) => {res:?}");
+    println!("Hello from Rust guest [{input}]: /get({addr}) => {res:?}\n{dirs:?}");
 
     return input;
   }

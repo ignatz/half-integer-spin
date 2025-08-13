@@ -8,5 +8,11 @@ world custom-world {
   // Pull in WASI http interface for outbound requests.
   import wasi:http/outgoing-handler@0.2.6;
 
+  // Pull in WASI filesystem interfaces
+  include wasi:filesystem/imports@0.2.6;
+
+  // Pull in WASI random interfaces
+  include wasi:random/imports@0.2.6;
+
   export custom-endpoint;
 }
