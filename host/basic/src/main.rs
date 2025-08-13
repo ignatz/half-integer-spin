@@ -1,6 +1,7 @@
 use bytes::Bytes;
 use http_body_util::BodyExt;
 use http_body_util::combinators::BoxBody;
+use std::time::SystemTime;
 use wasmtime::component::{Component, Linker, ResourceTable};
 use wasmtime::{Config, Engine, Result, Store};
 use wasmtime_wasi::p2::add_to_linker_async;
@@ -40,7 +41,6 @@ pub async fn custom_send_request_handler(
   let resp = http::Response::builder()
     .status(200)
     .body(full(Bytes::from_static(b"")))
-    // .body(stream_from_string("".to_string()).await)
     .map_err(|_| wasmtime_wasi_http::bindings::http::types::ErrorCode::ConnectionReadTimeout)
     .unwrap();
 
@@ -90,23 +90,35 @@ async fn main() -> Result<()> {
   config.async_support(true);
   config.wasm_backtrace_details(wasmtime::WasmBacktraceDetails::Enable);
   let engine = Engine::new(&config)?;
-  let mut linker = Linker::new(&engine);
 
-  // Adds all the default implementations: clocks, random, filesystem, ...
-  add_to_linker_async(&mut linker)?;
+  // Load the component.
+  let component = {
+    let start = SystemTime::now();
+    let component = Component::from_file(&engine, &wasm_source_file)?;
+    println!(
+      "Component load in: {:?}",
+      SystemTime::now().duration_since(start).unwrap()
+    );
+    component
+  };
 
-  // Adds default HTTP handling - incoming and outgoing.
-  wasmtime_wasi_http::add_only_http_to_linker_async(&mut linker)?;
+  let linker = {
+    let mut linker = Linker::new(&engine);
 
-  // Instantiate our component with the imports we've created, and run its function
-  let component = Component::from_file(&engine, &wasm_source_file)?;
+    // Adds all the default implementations: clocks, random, filesystem, ...
+    add_to_linker_async(&mut linker)?;
+
+    // Adds default HTTP handling - incoming and outgoing.
+    wasmtime_wasi_http::add_only_http_to_linker_async(&mut linker)?;
+
+    linker
+  };
 
   let mut store = Store::new(
     &engine,
     State {
       wasi_ctx: WasiCtxBuilder::new()
         .inherit_stdio()
-        .inherit_args()
         .args(&["bar"])
         .allow_tcp(false)
         .allow_udp(false)
