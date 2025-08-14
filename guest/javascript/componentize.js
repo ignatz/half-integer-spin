@@ -15,7 +15,9 @@ console.log(`compiling (${filename}, ${wit}) with AoT = ${enableAot}`);
 const { component } = await componentize({
   sourcePath: filename,
   witPath: resolve(wit),
-  enableAot
+  enableAot,
+  enableFeatures: ["stdio", "random", "clocks", "http"],
+  disableFeatures: ["fetch-event"],
 });
 
 const targetDir = 'dist';

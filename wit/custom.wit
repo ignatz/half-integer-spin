@@ -15,4 +15,6 @@ world custom-world {
   include wasi:random/imports@0.2.6;
 
   export custom-endpoint;
+
+  // export wasi:http/incoming-handler@0.2.6;
 }
