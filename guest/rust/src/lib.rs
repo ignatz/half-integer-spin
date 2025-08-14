@@ -1,4 +1,7 @@
-use spin_sdk::http;
+use wstd::http::body::{BodyForthcoming, IncomingBody};
+use wstd::http::server::{Finished, Responder};
+use wstd::http::{Client, Request, Response, StatusCode};
+use wstd::io::{AsyncWrite, empty};
 
 wit_bindgen::generate!({
     world: "half-spin:example/custom-world",
@@ -33,10 +36,10 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
       filesystem::preopens::get_directories();
 
     let addr = "https://google.com/index.html";
-    let res = http::run(http::send::<_, http::Response>(http::Request::new(
-      http::Method::Get,
-      addr,
-    )));
+    let request = Request::builder().uri(addr).body(empty()).unwrap();
+
+    let client = Client::new();
+    let res = wstd::runtime::block_on(client.send(request));
 
     println!("Hello from Rust guest [{input}]: /get({addr}) => {res:?}\n{dirs:?}");
 
@@ -46,16 +49,25 @@ impl crate::exports::half_spin::example::custom_endpoint::Guest for CustomEndpoi
 
 export!(CustomEndpoint);
 
-/// A Spin HTTP component that internally routes requests.
-#[spin_sdk::http_component]
-async fn handle_route(req: http::Request) -> http::Response {
-  async fn root(_req: http::Request, _params: http::Params) -> http::Response {
-    let msg = std::future::ready("Hello! - from root HTTP handler").await;
-    println!("{msg}");
-    return http::Response::new(200, "response".to_string());
-  }
+async fn http_not_found(_request: Request<IncomingBody>, responder: Responder) -> Finished {
+  let response = Response::builder()
+    .status(StatusCode::NOT_FOUND)
+    .body(empty())
+    .unwrap();
+  responder.respond(response).await
+}
 
-  let mut router = http::Router::new();
-  router.get_async("/", root);
-  return router.handle_async(req).await;
+#[wstd::http_server]
+async fn main(request: Request<IncomingBody>, responder: Responder) -> Finished {
+  match request.uri().path_and_query().unwrap().as_str() {
+    "/" => {
+      let msg = std::future::ready("Hello! - from root HTTP handler").await;
+      println!("{msg}");
+
+      let mut body = responder.start_response(Response::new(BodyForthcoming));
+      let result = body.write_all(b"response").await;
+      Finished::finish(body, result, None)
+    }
+    _ => http_not_found(request, responder).await,
+  }
 }
