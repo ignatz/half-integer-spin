@@ -132,14 +132,25 @@ async fn main() -> Result<()> {
   );
 
   // First call custom endpoint.
-  let bindings = world::CustomWorld::instantiate_async(&mut store, &component, &linker).await?;
+  {
+    let bindings = world::CustomWorld::instantiate_async(&mut store, &component, &linker).await?;
 
-  let input = "input".to_string();
-  let output = bindings
-    .half_spin_example_custom_endpoint()
-    .call_handle_request(&mut store, &input)
-    .await?;
-  assert_eq!(input, output);
+    let input = "input".to_string();
+    let output = bindings
+      .half_spin_example_custom_endpoint()
+      .call_handle_request(&mut store, &input)
+      .await?;
+    assert_eq!(input, output);
+  }
+
+  // Call it again to show that newly instantiated bindings don't share global state.
+  {
+    let bindings = world::CustomWorld::instantiate_async(&mut store, &component, &linker).await?;
+    let _output = bindings
+      .half_spin_example_custom_endpoint()
+      .call_handle_request(&mut store, "input")
+      .await?;
+  }
 
   // Then call incoming HTTP handler.
   let proxy =

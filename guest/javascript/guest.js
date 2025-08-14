@@ -36,6 +36,11 @@ export const incomingHandler = {
 //   ),
 // );
 
+let globalState = (() => {
+  console.log("global init called");
+  return 0;
+})();
+
 export const customEndpoint = {
   handleRequest: async function(input) {
     try {
@@ -45,7 +50,8 @@ export const customEndpoint = {
 
       const dirs = listDirectories();
 
-      console.log(`Hello from JS guest [${input}]: /get(${addr}) => ${text}\n${dirs}`);
+      globalState++;
+      console.log(`Hello ${globalState} from JS guest [${input}]: /get(${addr}) => ${text}\n${dirs}`);
     } catch (err) {
       console.error(`Error: ${err}`);
     }
