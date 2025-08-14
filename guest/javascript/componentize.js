@@ -8,7 +8,7 @@ const enableAot = process.env.ENABLE_AOT == '1';
 
 const filename = 'guest.js';
 const base = parse(filename).name;
-const wit = `../../wit/`;
+const wit = `../../wit-js`;
 
 console.log(`compiling (${filename}, ${wit}) with AoT = ${enableAot}`);
 
@@ -16,8 +16,8 @@ const { component } = await componentize({
   sourcePath: filename,
   witPath: resolve(wit),
   enableAot,
-  enableFeatures: ["stdio", "random", "clocks", "http"],
-  disableFeatures: ["fetch-event"],
+  enableFeatures: ["stdio", "random", "clocks", "http", "fetch-event"],
+  // disableFeatures: ["fetch-event"],
 });
 
 const targetDir = 'dist';

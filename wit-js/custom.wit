@@ -6,13 +6,17 @@ interface custom-endpoint  {
 
 world custom-world {
   // Pull in WASI http interface for outbound requests.
-  import wasi:http/outgoing-handler@0.2.6;
+  import wasi:http/outgoing-handler@0.2.3;
 
   // Pull in WASI filesystem interfaces
-  include wasi:filesystem/imports@0.2.6;
+  include wasi:filesystem/imports@0.2.3;
 
   // Pull in WASI random interfaces
-  include wasi:random/imports@0.2.6;
+  include wasi:random/imports@0.2.3;
 
   export custom-endpoint;
+
+  // Note: the rust guest meddles with bindgen and exports their own handler
+  // (both spin and wstd).
+  export wasi:http/incoming-handler@0.2.3;
 }
