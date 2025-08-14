@@ -16,8 +16,8 @@ const { component } = await componentize({
   sourcePath: filename,
   witPath: resolve(wit),
   enableAot,
-  enableFeatures: ["stdio", "random", "clocks", "http", "fetch-event"],
-  // disableFeatures: ["fetch-event"],
+  enableFeatures: ["stdio", "random", "clocks", "http"],
+  disableFeatures: ["fetch-event"],
 });
 
 const targetDir = 'dist';
