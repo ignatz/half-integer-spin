@@ -36,10 +36,20 @@ export const incomingHandler = {
 //   ),
 // );
 
-let globalState = (() => {
-  console.log("global init called");
-  return 0;
+let globalState = 1;
+const _other = (() => {
+  globalState = 5;
+  return 23;
 })();
+
+let handlers = {}
+
+function addCallback(key, f) {
+  handlers[key] = f;
+}
+
+addCallback("test0", () => 4);
+addCallback("test1", () => 4);
 
 export const customEndpoint = {
   handleRequest: async function(input) {
@@ -51,7 +61,7 @@ export const customEndpoint = {
       const dirs = listDirectories();
 
       globalState++;
-      console.log(`Hello ${globalState} from JS guest [${input}]: /get(${addr}) => ${text}\n${dirs}`);
+      console.log(`Hello ${globalState} ${Object.keys(handlers)} from JS guest [${input}]: /get(${addr}) => ${text}\n${dirs}`);
     } catch (err) {
       console.error(`Error: ${err}`);
     }
